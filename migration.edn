@@ -1,4 +1,4 @@
 {:schema "etzhayyim.migration/v1"
  :source {:repository "etzhayyim/root" :revision "afe5f1d995162277d2fb98f762705b53f9f695fd" :path "60-apps/etzhayyim-project-agentgateway" :tree "9ee2aed1f33f52c84386feaab6862768334aac96" :tracked-files 14 :bytes 14385}
- :destination {:repository "etzhayyim/com-etzhayyim-app-agentgateway"}
+ :destination {:repository "kotoba-lang/app-agentgateway"}
  :identity {:allowed-additions ["README.edn" "migration.edn"]}}
