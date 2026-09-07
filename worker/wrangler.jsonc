@@ -1,7 +1,16 @@
+// Frontend migrated Svelte -> cljs (see worker/cljs/, shadow-cljs + reagent +
+// re-frame + jp-go-dds). `main` was dropped: the SvelteKit worker
+// (`svelte/.svelte-kit/cloudflare/_worker.js`) no longer exists now that
+// `worker/svelte` is removed. `src/index.ts` (a Hono MCP router stub) is the
+// evident candidate for the worker entry, but it does not serve
+// `env.ASSETS`, so pointing `main` at it here would be a guess, not a fact —
+// wiring it (or the preserved `src/xrpc-proxy.ts`) as the deployed entry is a
+// product decision, not part of this migration.
+// UNVERIFIED: this config has not been exercised with `wrangler deploy` or
+// `wrangler dev`.
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "etzhayyim-agentgateway",
-  "main": "svelte/.svelte-kit/cloudflare/_worker.js",
   "compatibility_date": "2024-12-20",
   "observability": {
     "enabled": true
@@ -13,13 +22,13 @@
     }
   ],
   "assets": {
-    "directory": "./svelte/.svelte-kit/cloudflare/client",
+    "directory": "./cljs/public",
     "binding": "ASSETS",
     "html_handling": "auto-trailing-slash",
     "not_found_handling": "none"
   },
   "vars": {
-    "APP_FRAMEWORK": "sveltekit-edge-bff",
+    "APP_FRAMEWORK": "cljs-reagent-re-frame-jp-go-dds",
     "AGENTGATEWAY_MCP_ROUTER_URL": "https://mcp.etzhayyim.com/xrpc/com.etzhayyim.mcp.message"
   }
 }
