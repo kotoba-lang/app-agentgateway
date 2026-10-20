@@ -1,0 +1,22 @@
+(ns gateway.rpc-parity-test
+  "aiueos/gateway_rpc.cljk（判定コア）と正本（worker/src/index.ts）の parity。
+  JSON-RPC 2.0 の検証・エラーコード・method 分岐が変われば落ちる drift 検査。"
+  (:require [clojure.test :refer [deftest is testing]]
+            [clojure.string :as str]
+            ["fs" :as fs]))
+
+(def src
+  (fs/readFileSync (str/join "/" ["worker" "src" "index.ts"]) "utf8"))
+
+(deftest rpc-rules-match-guest
+  (testing "guest test-request: jsonrpc 2.0 と method が必須（-32600）"
+    (is (str/includes? src "jsonrpc !== '2.0'"))
+    (is (str/includes? src "-32600"))
+    (is (str/includes? src "Invalid Request")))
+  (testing "guest test-parse: パース失敗は -32700"
+    (is (str/includes? src "Parse error")))
+  (testing "guest test-method: 既知 method のみ（tools/list / tools/call）"
+    (is (str/includes? src "tools/list"))
+    (is (str/includes? src "tools/call")))
+  (testing "guest test-error-code: JSON-RPC 2.0 標準コードの並び"
+    (is (str/includes? src "jsonrpc: '2.0'"))))

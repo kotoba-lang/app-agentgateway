@@ -1,0 +1,73 @@
+(ns gateway.rpc
+  "agentgateway JSON-RPC 判定コア — itonami dapp bundle（pure, :effects #{}）。
+
+  MCP router エントリポイントの JSON-RPC 2.0 判定（正本:
+  worker/src/index.ts）:
+
+  - **request は jsonrpc '2.0' と method が必須**（無ければ
+    **-32600 Invalid Request**）。
+  - **JSON パース失敗は -32700 Parse error**。
+  - **未処理 method は -32601 Method not found**（既知 method のみ dispatch:
+    tools/list / tools/call）。
+  - tool 名は tools/call の中で検証（既知 tool のみ実行）。
+
+  request-judgment: 0 = dispatch / 1 = Invalid Request（-32600）
+  method-judgment: 0 = 実行 / 1 = Method not found（-32601）
+    / 2 = tool not found
+  error-code の戻り: 0 parse→-32700 / 1 invalid-request→-32600
+    / 2 method-not-found→-32601 / 3 invalid-params→-32602
+  parse-judgment: 1 = パース可 / 0 = Parse error（-32700）
+
+  実行 host はスカラーのみ = KIR v3 / i64/direct ABI（kernel/selfhost 両対応）。
+
+  テストはゼロ引数 test-*、戻り 1/0:
+  <amu> test aiueos/gateway_rpc.cljk"
+  (:export [main request-judgment method-judgment error-code parse-judgment
+            test-request test-method test-error-code test-parse
+            test-fail-closed]))
+
+(defn main [] :i64
+  0)
+
+(defn request-judgment [is-v20 :i64 has-method :i64] :i64
+  (if (and (= is-v20 1) (= has-method 1)) 0 1))
+
+(defn method-judgment [method-known :i64 tool-known :i64] :i64
+  (if (= method-known 0)
+    1
+    (if (= tool-known 1) 0 2)))
+
+(defn error-code [kind-code :i64] :i64
+  ;; JSON-RPC 2.0 の標準エラーコード
+  (if (= kind-code 0)
+    -32700
+    (if (= kind-code 1)
+      -32600
+      (if (= kind-code 2)
+        -32601
+        (if (= kind-code 3) -32602 0)))))
+
+(defn parse-judgment [parse-ok :i64] :i64
+  (if (= parse-ok 1) 1 0))
+
+;; --- tests（戻り 1 = pass） ------------------------------------------------
+
+(defn test-request [] :i64
+  ;; jsonrpc 2.0 と method が必須（無ければ -32600）
+  (if (= (+ (request-judgment 1 1) (request-judgment 1 0) (request-judgment 0 1)) 2) 1 0))
+
+(defn test-method [] :i64
+  ;; 未処理 method は -32601、tool 未登録も拒否
+  (if (= (+ (method-judgment 1 1) (method-judgment 0 1) (method-judgment 1 0)) 3) 1 0))
+
+(defn test-error-code [] :i64
+  ;; 標準 4 コードの帰結（合計 -32700-32600-32601-32602 = -130503）
+  (if (= (+ (error-code 0) (error-code 1) (error-code 2) (error-code 3)) -130503) 1 0))
+
+(defn test-parse [] :i64
+  ;; パース失敗は -32700 Parse error
+  (if (= (+ (parse-judgment 1) (parse-judgment 0)) 1) 1 0))
+
+(defn test-fail-closed [] :i64
+  ;; 未知 kind は 0（エラーコードを発明しない）
+  (if (= (+ (error-code 9) (error-code -1)) 0) 1 0))
