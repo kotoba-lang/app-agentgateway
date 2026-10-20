@@ -1,0 +1,18 @@
+;; app-agentgateway — itonami（dapp）の aiueos アプリ記述子（notes.edn 形）。
+;; 判定コアは aiueos/gateway_rpc.cljk（JSON-RPC 2.0 判定）。
+;; 正本は worker/src/index.ts（MCP router エントリポイント）。pure（:effects #{}）。
+{:aiueos/component :app/gateway-rpc
+ :aiueos/kind :app
+ :aiueos/trust :untrusted
+ :aiueos/source "gateway_rpc.cljk"
+ :aiueos/wasm "gateway_rpc.wasm"
+ :aiueos/entry "main"
+ :aiueos/args []
+ :aiueos/imports #{}
+ :aiueos/exports #{:app/main
+                   :app/request-judgment
+                   :app/method-judgment
+                   :app/error-code
+                   :app/parse-judgment}
+ :aiueos/effects #{}
+ :aiueos/limits {:memory-pages 16 :fuel 5000000}}
